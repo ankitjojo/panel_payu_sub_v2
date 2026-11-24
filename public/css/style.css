@@ -1,0 +1,5 @@
+.raw, .log { background: #0f172a; color: #e2e8f0; border-radius: .5rem; padding: .75rem 1rem; font-size: .8rem; max-height: 420px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
+.log { max-height: 180px; }
+.log:empty { display: none; }
+#qrCanvas { max-width: 100%; height: auto !important; border: 1px solid var(--bs-border-color); border-radius: .5rem; padding: .5rem; background: #fff; }
+.mono-wrap { word-break: break-all; font-family: var(--bs-font-monospace); font-size: .8rem; }

@@ -1,0 +1,34 @@
+<%- include("partials/head") %>
+<%
+  const p = payu || {};
+  const status = String(p.status || "").toLowerCase();
+  const tone = status === "success" ? "success" : status === "failure" ? "danger" : "warning";
+  const resume = "/?" + new URLSearchParams({ resume: "1", sToken: p.udf1 || "", txnid: p.txnid || "", payuStatus: p.status || "" }).toString();
+%>
+<main class="container pb-5" style="max-width: 860px">
+  <div class="card shadow-sm">
+    <div class="card-header fw-semibold">Back from PayU <small class="text-muted">surl / furl</small></div>
+    <div class="card-body vstack gap-3">
+      <% if (!p.txnid) { %>
+        <div class="alert alert-secondary mb-0">No PayU result was posted to this page.</div>
+      <% } else { %>
+        <div class="alert alert-<%= tone %> mb-0">
+          PayU says <strong><%= p.status || "unknown" %></strong>
+          <% if (p.unmappedstatus) { %>(<code><%= p.unmappedstatus %></code>)<% } %>
+          for txnid <code><%= p.txnid %></code>
+          <% if (p.error_Message && status !== "success") { %><div class="small mt-1"><%= p.error_Message %></div><% } %>
+        </div>
+        <p class="small text-muted mb-0">This redirect is informational. The payment only counts once the backend's
+          <code>/user/verify-payment</code> (or the PayU webhook) confirms it. Continue to verify with the backend:</p>
+        <div><a class="btn btn-success" href="<%= resume %>">Verify with backend</a></div>
+        <details>
+          <summary class="small text-muted">All fields PayU posted<%= hasHash ? " (hash hidden)" : "" %></summary>
+          <pre class="raw mt-2"><%= JSON.stringify(p, null, 2) %></pre>
+        </details>
+      <% } %>
+    </div>
+  </div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

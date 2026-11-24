@@ -1,0 +1,16 @@
+{
+  "name": "payu_sub_v2",
+  "version": "1.0.0",
+  "description": "Test frontend for the PAYU_V2 initiate-factory-payment and verify-payment APIs",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2"
+  }
+}

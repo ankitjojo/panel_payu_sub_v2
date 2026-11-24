@@ -1,0 +1,109 @@
+<%- include("partials/head") %>
+<main class="container pb-5">
+  <div class="row g-4">
+
+    <!-- 1. Initiate -->
+    <div class="col-lg-5">
+      <div class="card shadow-sm">
+        <div class="card-header fw-semibold">1. Initiate payment <small class="text-muted">POST /user/initiate-factory-payment</small></div>
+        <form id="initiateForm" class="card-body vstack gap-3" autocomplete="off">
+          <div>
+            <label class="form-label" for="iProviderSkuId">Provider SKU id <span class="text-danger">*</span></label>
+            <input class="form-control" id="iProviderSkuId" name="iProviderSkuId" placeholder="sUniqueSkuId of a PAYU_V2 provider SKU" required>
+            <div class="form-text">Subscription SKU starts a UPI Autopay mandate; one-time SKU is a normal payment.</div>
+          </div>
+
+          <div>
+            <label class="form-label" for="sPaymentMethod">Payment method</label>
+            <select class="form-select" id="sPaymentMethod" name="sPaymentMethod">
+              <option value="UPI_QR">UPI_QR: QR + polling (works end to end in the browser)</option>
+              <option value="UPI_INTENT">UPI_INTENT: SDK params only (Android UPI SDK)</option>
+              <option value="UPI_VPA">UPI_VPA: collect request via PayU (web form post)</option>
+            </select>
+          </div>
+          <div id="vpaGroup" class="d-none">
+            <label class="form-label" for="sVpa">UPI ID (VPA)</label>
+            <input class="form-control" id="sVpa" name="sVpa" placeholder="name@okaxis">
+            <div class="form-text">The backend validates it with PayU first. Needs <code>PAYU_V2_UPI_VPA_ENABLED=true</code> in the backend's <code>.env.dev</code>.</div>
+          </div>
+
+          <div class="row g-2">
+            <div class="col-12"><label class="form-label" for="sUserId">User id <span class="text-danger">*</span></label>
+              <input class="form-control" id="sUserId" name="sUserId" placeholder="an existing sUserId (min 4 chars)" required></div>
+            <div class="col-md-6"><label class="form-label" for="sUsername">Name</label><input class="form-control" id="sUsername" name="sUsername"></div>
+            <div class="col-md-6"><label class="form-label" for="sEmail">Email</label><input class="form-control" id="sEmail" name="sEmail" type="email"></div>
+            <div class="col-md-4"><label class="form-label" for="sPhoneCode">Phone code</label><input class="form-control" id="sPhoneCode" name="sPhoneCode" value="+91"></div>
+            <div class="col-md-8"><label class="form-label" for="sPhoneNumber">Phone</label><input class="form-control" id="sPhoneNumber" name="sPhoneNumber"></div>
+            <div class="col-md-6"><label class="form-label" for="sState">State</label><input class="form-control" id="sState" name="sState"></div>
+            <div class="col-md-6"><label class="form-label" for="sCity">City</label><input class="form-control" id="sCity" name="sCity"></div>
+            <div class="col-md-6"><label class="form-label" for="sCountryCode2">Country</label><input class="form-control" id="sCountryCode2" name="sCountryCode2" value="IN"></div>
+            <div class="col-md-6"><label class="form-label" for="sCurrencyCode">Currency</label><input class="form-control" id="sCurrencyCode" name="sCurrencyCode" value="INR"></div>
+          </div>
+
+          <details>
+            <summary class="small text-muted">Request headers sent to PayU via the backend</summary>
+            <div class="vstack gap-2 mt-2">
+              <div><label class="form-label" for="userIp">user-ip</label>
+                <input class="form-control" id="userIp" name="userIp" placeholder="your public IP (needed for UPI_QR)">
+                <div class="form-text">PayU receives this as the client IP. Leave empty to test the "user-ip header is required" error.</div></div>
+              <div><label class="form-label" for="userAgent">user-agent</label><input class="form-control" id="userAgent" name="userAgent"></div>
+              <div class="form-text">project / devicetype / deviceversion / deviceid come from <code>.env</code>:
+                <code><%= headers.project %></code> · <code><%= headers.devicetype %></code> · <code><%= headers.deviceversion %></code> · <code><%= headers.deviceid %></code></div>
+            </div>
+          </details>
+
+          <button class="btn btn-primary" id="initiateBtn" type="submit">Initiate payment</button>
+          <div id="initiateAlert"></div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 2 + 3 -->
+    <div class="col-lg-7 vstack gap-4">
+
+      <div class="card shadow-sm">
+        <div class="card-header fw-semibold">2. Pay</div>
+        <div class="card-body" id="payBody">
+          <p class="text-muted mb-0">Initiate a payment to see the QR code or the SDK parameters here.</p>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header fw-semibold">3. Verify payment <small class="text-muted">POST /user/verify-payment</small></div>
+        <div class="card-body vstack gap-3">
+          <div class="row g-2">
+            <div class="col-md-6"><label class="form-label" for="vToken">sToken</label><input class="form-control" id="vToken" placeholder="filled after initiate"></div>
+            <div class="col-md-6"><label class="form-label" for="vTxn">sProviderToken (txnid)</label><input class="form-control" id="vTxn"></div>
+          </div>
+          <div class="d-flex flex-wrap align-items-center gap-2">
+            <button class="btn btn-success" id="verifyBtn" type="button">Verify now</button>
+            <button class="btn btn-outline-secondary" id="pollBtn" type="button">Start auto-poll</button>
+            <span id="statusBadge" class="badge text-bg-secondary fs-6">NOT VERIFIED</span>
+            <span id="pollInfo" class="small text-muted"></span>
+          </div>
+          <div id="verifyAlert"></div>
+          <pre id="verifyLog" class="log mb-0"></pre>
+        </div>
+      </div>
+
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <ul class="nav nav-tabs card-header-tabs" role="tablist">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabInitReq" type="button">Initiate request</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabInitRes" type="button">Initiate response</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabVerReq" type="button">Verify request</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabVerRes" type="button">Verify response</button></li>
+          </ul>
+        </div>
+        <div class="card-body tab-content">
+          <div class="tab-pane fade show active" id="tabInitReq"><pre class="raw" id="rawInitReq">-</pre></div>
+          <div class="tab-pane fade" id="tabInitRes"><pre class="raw" id="rawInitRes">-</pre></div>
+          <div class="tab-pane fade" id="tabVerReq"><pre class="raw" id="rawVerReq">-</pre></div>
+          <div class="tab-pane fade" id="tabVerRes"><pre class="raw" id="rawVerRes">-</pre></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+<%- include("partials/foot") %>
