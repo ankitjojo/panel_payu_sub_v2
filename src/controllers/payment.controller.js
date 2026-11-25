@@ -18,7 +18,8 @@ async function initiate(req, res) {
   const body = {
     iProviderSkuId: str(b.iProviderSkuId),
     sPaymentMethod: method,
-    ...(method === "UPI_VPA" || str(b.sVpa) ? { sVpa: str(b.sVpa) } : {}),
+    // The hidden VPA field keeps its last value; only UPI_VPA should send it (the backend validates any sVpa it gets)
+    ...(method === "UPI_VPA" ? { sVpa: str(b.sVpa) } : {}),
     sCountryCode2: str(b.sCountryCode2) || "IN",
     sCurrencyCode: str(b.sCurrencyCode) || "INR",
     nAmount: Number(b.nAmount) || 0, // the backend ignores it for PAYU_V2 and uses the DB price
